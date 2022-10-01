@@ -7,19 +7,25 @@ import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
 import android.widget.Toast
+import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import com.google.android.material.snackbar.Snackbar
 import com.padcmyanmar.ttm.themovieapp.R
 import com.padcmyanmar.ttm.themovieapp.data.models.MovieModel
 import com.padcmyanmar.ttm.themovieapp.data.models.MovieModelImpl
+import com.padcmyanmar.ttm.themovieapp.data.vos.ActorVO
 import com.padcmyanmar.ttm.themovieapp.data.vos.GenreVO
 import com.padcmyanmar.ttm.themovieapp.data.vos.MovieVO
+import com.padcmyanmar.ttm.themovieapp.mvp.presenters.IBasePresenter
+import com.padcmyanmar.ttm.themovieapp.mvp.presenters.MovieDetailPresenter
+import com.padcmyanmar.ttm.themovieapp.mvp.presenters.MovieDetailsPresenterImpl
+import com.padcmyanmar.ttm.themovieapp.mvp.views.MovieDetailsView
 import com.padcmyanmar.ttm.themovieapp.utils.IMAGE_BASE_URL
 import com.padcmyanmar.ttm.themovieapp.viewpods.ActorListViewPod
 import kotlinx.android.synthetic.main.activity_movie_details.*
 import kotlinx.android.synthetic.main.view_holder_movie.*
 
-class MovieDetailsActivity : AppCompatActivity() {
+class MovieDetailsActivity : AppCompatActivity(), MovieDetailsView {
 
 
     companion object {
@@ -37,18 +43,18 @@ class MovieDetailsActivity : AppCompatActivity() {
     }
 
 
-
     //View Pods
-    lateinit var actorsViewPod: ActorListViewPod
-    lateinit var creatorsViewPod: ActorListViewPod
+    private lateinit var actorsViewPod: ActorListViewPod
+    private lateinit var creatorsViewPod: ActorListViewPod
 
-    //Models
-    private val mMovieModel: MovieModel = MovieModelImpl
+    //Presenter
+    private lateinit var mPresenter: MovieDetailPresenter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_movie_details)
 
+        setUpPresenter()
         window.setFlags(
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
@@ -61,38 +67,23 @@ class MovieDetailsActivity : AppCompatActivity() {
 
     }
 
+    private fun setUpPresenter() {
+        mPresenter = ViewModelProvider(this)[MovieDetailsPresenterImpl::class.java]
+        mPresenter.initView(this)
+    }
+
     private fun getMovieDetailIntentParamAndRequestData() {
 
         val movieId = intent?.getIntExtra(EXTRA_MOVIE_ID, 0)
         // Snackbar.make(window.decorView,"EXTRA MOVIE ID = $movieId",Snackbar.LENGTH_SHORT).show()
         movieId?.let {
-            requestData(it)
+            mPresenter.onUiReadyInMovieDetails(this, movieId = movieId)
         }
     }
 
-    private fun requestData(movieId: Int) {
-        mMovieModel.getMovieDetail(
-            movieId = movieId.toString(),
-            onFailure = {
-                showError(it)
-            })?.observe(this){
-            it?.let {movieDetails -> bindData(movieDetails)  }
-        }
-
-        mMovieModel.getCreditsByMovie(
-            movieId = movieId.toString(),
-            onSuccess = {
-                actorsViewPod.setData(it.first)
-                creatorsViewPod.setData(it.second)
-            },
-            onFailure = { showError(it) }
-        )
-
-
-    }
 
     private fun bindData(movieVO: MovieVO) {
-        collapsingToolbarLayoutTitle.title = movieVO.title?: ""
+        collapsingToolbarLayoutTitle.title = movieVO.title ?: ""
         Glide.with(this)
             .load("$IMAGE_BASE_URL${movieVO.posterPath}")
             .into(ivMovieDetails)
@@ -132,16 +123,26 @@ class MovieDetailsActivity : AppCompatActivity() {
 
     }
 
-    private fun showError(it: String) {
+    override fun showMovieDetails(movie: MovieVO) {
+        bindData(movie)
+    }
 
-        Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
+    override fun showCreditsByMovie(cast: List<ActorVO>, crew: List<ActorVO>) {
+        actorsViewPod.setData(cast)
+        creatorsViewPod.setData(crew)
+    }
 
+    override fun navigateBack() {
+        finish()
+    }
 
+    override fun showError(errorString: String) {
+        Snackbar.make(window.decorView, errorString, Snackbar.LENGTH_LONG).show()
     }
 
     private fun setUpListeners() {
         btnBack.setOnClickListener {
-            super.onBackPressed()
+            mPresenter.onTapBack()
         }
     }
 
