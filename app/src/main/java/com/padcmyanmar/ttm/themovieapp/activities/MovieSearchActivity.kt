@@ -33,10 +33,10 @@ class MovieSearchActivity : AppCompatActivity(),MovieViewHolderDelegate {
         setContentView(R.layout.activity_movie_search)
 
         setUpRecyclerView()
-        setUpLsiteners()
+        setUpListeners()
     }
 
-    private fun setUpLsiteners() {
+    private fun setUpListeners() {
 
         etSearch.textChanges()
             .debounce(500L,TimeUnit.MILLISECONDS)
