@@ -19,16 +19,21 @@ import com.padcmyanmar.ttm.themovieapp.adapters.ShowcaseAdapter
 import com.padcmyanmar.ttm.themovieapp.data.vos.ActorVO
 import com.padcmyanmar.ttm.themovieapp.data.vos.GenreVO
 import com.padcmyanmar.ttm.themovieapp.data.vos.MovieVO
+import com.padcmyanmar.ttm.themovieapp.delegates.BannerViewHolderDelegate
+import com.padcmyanmar.ttm.themovieapp.delegates.MovieViewHolderDelegate
+import com.padcmyanmar.ttm.themovieapp.delegates.ShowcaseViewHolderDelegate
 
 import com.padcmyanmar.ttm.themovieapp.mvp.presenters.MainPresenter
 import com.padcmyanmar.ttm.themovieapp.mvp.presenters.MainPresenterImpl
 import com.padcmyanmar.ttm.themovieapp.mvp.views.MainView
+import com.padcmyanmar.ttm.themovieapp.mvvm.MainViewModel
 import com.padcmyanmar.ttm.themovieapp.viewpods.ActorListViewPod
 import com.padcmyanmar.ttm.themovieapp.viewpods.MovieListViewPod
 import kotlinx.android.synthetic.main.activity_main.*
 
 
-class MainActivity : AppCompatActivity(), MainView {
+class MainActivity : AppCompatActivity(), BannerViewHolderDelegate,
+    ShowcaseViewHolderDelegate, MovieViewHolderDelegate {
 
 
     private lateinit var mBannerAdapter: BannerAdapter
@@ -39,16 +44,19 @@ class MainActivity : AppCompatActivity(), MainView {
     private lateinit var mMoviesByGenreViewPod: MovieListViewPod
     private lateinit var mActorListViewPod: ActorListViewPod
 
-    //Presenter
-    private lateinit var mPresenter: MainPresenter
+//    //Presenter
+//    private lateinit var mPresenter: MainPresenter
+
+    //View Model
+    private lateinit var mViewModel: MainViewModel
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        setUpPresenter()
-
+        //setUpPresenter()
+        setUpViewModel()
         // App Bar Leading Icon
         setUpToolbar()
         setUpViewPods()
@@ -56,62 +64,78 @@ class MainActivity : AppCompatActivity(), MainView {
         setUpShowCaseRecyclerView()
         setUpListeners()
 
-        mPresenter.onUiReady(this)
+//        mPresenter.onUiReady(this)
+
+        //Observe Live Data
+        observeLiveData()
 
 
     }
 
-    private fun setUpPresenter() {
-        mPresenter = ViewModelProvider(this)[MainPresenterImpl::class.java]
-        mPresenter.initView(this)
-    }
+//    private fun setUpPresenter() {
+//        mPresenter = ViewModelProvider(this)[MainPresenterImpl::class.java]
+//        mPresenter.initView(this)
+//    }
 
 
-    override fun showNowPlayingMovies(nowPlayingMovies: List<MovieVO>) {
-        mBannerAdapter.setNewData(nowPlayingMovies)
+    private fun setUpViewModel(){
+        mViewModel = ViewModelProvider(this)[MainViewModel::class.java]
+        mViewModel.getInitialData()
     }
 
-    override fun showPopularMovies(popularMovies: List<MovieVO>) {
-        mBestPopularMovieListViewPod.setData(popularMovies)
+    private fun observeLiveData(){
+        mViewModel.nowPlayingMovieLiveData?.observe(this, mBannerAdapter::setNewData)
+        mViewModel.popularMoviesLiveData?.observe(this, mBestPopularMovieListViewPod::setData)
+        mViewModel.topRatedMoviesLiveData?.observe(this, mShowcaseAdapter::setNewData)
+        mViewModel.genresLiveData.observe(this, ::setUpGenreTabLayout)
+        mViewModel.moviesByGenreLiveData.observe(this,mMoviesByGenreViewPod::setData)
+        mViewModel.actorsLiveData.observe(this,mActorListViewPod::setData)
     }
-
-    override fun showTopRatedMovies(topRatedMovies: List<MovieVO>) {
-        mShowcaseAdapter.setNewData(topRatedMovies)
-    }
-
-    override fun showGenres(genreList: List<GenreVO>) {
-        setUpGenreTabLayout(genreList)
-    }
-
-    override fun showMoviesByGenre(moviesByGenre: List<MovieVO>) {
-        mMoviesByGenreViewPod.setData(moviesByGenre)
-    }
-
-    override fun showActors(actors: List<ActorVO>) {
-        mActorListViewPod.setData(actors)
-    }
-
-    override fun navigateToMovieDetailsScreen(movieId: Int) {
-        startActivity(MovieDetailsActivity.newIntent(this, movieId = movieId))
-    }
-
-    override fun showError(errorString: String) {
-        Snackbar.make(window.decorView, errorString, Snackbar.LENGTH_LONG).show()
-    }
+//    override fun showNowPlayingMovies(nowPlayingMovies: List<MovieVO>) {
+//        mBannerAdapter.setNewData(nowPlayingMovies)
+//    }
+//
+//    override fun showPopularMovies(popularMovies: List<MovieVO>) {
+//        mBestPopularMovieListViewPod.setData(popularMovies)
+//    }
+//
+//    override fun showTopRatedMovies(topRatedMovies: List<MovieVO>) {
+//        mShowcaseAdapter.setNewData(topRatedMovies)
+//    }
+//
+//    override fun showGenres(genreList: List<GenreVO>) {
+//        setUpGenreTabLayout(genreList)
+//    }
+//
+//    override fun showMoviesByGenre(moviesByGenre: List<MovieVO>) {
+//        mMoviesByGenreViewPod.setData(moviesByGenre)
+//    }
+//
+//    override fun showActors(actors: List<ActorVO>) {
+//        mActorListViewPod.setData(actors)
+//    }
+//
+//    override fun navigateToMovieDetailsScreen(movieId: Int) {
+//        startActivity(MovieDetailsActivity.newIntent(this, movieId = movieId))
+//    }
+//
+//    override fun showError(errorString: String) {
+//        Snackbar.make(window.decorView, errorString, Snackbar.LENGTH_LONG).show()
+//    }
 
 
     private fun setUpViewPods() {
         mBestPopularMovieListViewPod = vpBestPopularMovieList as MovieListViewPod
-        mBestPopularMovieListViewPod.setUpMovieListViewPod(mPresenter)
+        mBestPopularMovieListViewPod.setUpMovieListViewPod(this)
 
         mMoviesByGenreViewPod = vpMoviesByGenre as MovieListViewPod
-        mMoviesByGenreViewPod.setUpMovieListViewPod(mPresenter)
+        mMoviesByGenreViewPod.setUpMovieListViewPod(this)
 
         mActorListViewPod = vpActorsHomeScreen as ActorListViewPod
     }
 
     private fun setUpShowCaseRecyclerView() {
-        mShowcaseAdapter = ShowcaseAdapter(mPresenter)
+        mShowcaseAdapter = ShowcaseAdapter(this)
         rvShowcases.adapter = mShowcaseAdapter
         rvShowcases.layoutManager =
             LinearLayoutManager(applicationContext, LinearLayoutManager.HORIZONTAL, false)
@@ -122,7 +146,8 @@ class MainActivity : AppCompatActivity(), MainView {
         //Genre Tab Layout
         tabLayoutGenre.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab?) {
-                mPresenter.onTapGenre(tab?.position ?: 0)
+              //  mPresenter.onTapGenre(tab?.position ?: 0)
+                mViewModel.getMovieByGenre(tab?.position ?: 0)
             }
 
             override fun onTabUnselected(tab: TabLayout.Tab?) {
@@ -145,7 +170,7 @@ class MainActivity : AppCompatActivity(), MainView {
 
     private fun setUpBannerViewPager() {
 
-        mBannerAdapter = BannerAdapter(mPresenter)
+        mBannerAdapter = BannerAdapter(this)
         viewPagerBanner.adapter = mBannerAdapter
 
         dotsIndicatorBanner.attachTo(viewPagerBanner)
@@ -179,5 +204,17 @@ class MainActivity : AppCompatActivity(), MainView {
         }
 
 
+    }
+
+    override fun onTapMovieFromBanner(movieId: Int) {
+        startActivity(MovieDetailsActivity.newIntent(this, movieId = movieId))
+    }
+
+    override fun onTapMovie(movieId: Int) {
+        startActivity(MovieDetailsActivity.newIntent(this, movieId = movieId))
+    }
+
+    override fun onTapMovieFromShowcase(movieId: Int) {
+        startActivity(MovieDetailsActivity.newIntent(this, movieId = movieId))
     }
 }
