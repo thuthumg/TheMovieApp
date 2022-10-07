@@ -23,6 +23,8 @@ import com.padcmyanmar.ttm.themovieapp.data.vos.MovieVO
 import com.padcmyanmar.ttm.themovieapp.mvp.presenters.MainPresenter
 import com.padcmyanmar.ttm.themovieapp.mvp.presenters.MainPresenterImpl
 import com.padcmyanmar.ttm.themovieapp.mvp.views.MainView
+import com.padcmyanmar.ttm.themovieapp.routers.navigateToMovieDetailsActivity
+import com.padcmyanmar.ttm.themovieapp.routers.navigateToMovieSearchActivity
 import com.padcmyanmar.ttm.themovieapp.viewpods.ActorListViewPod
 import com.padcmyanmar.ttm.themovieapp.viewpods.MovieListViewPod
 import kotlinx.android.synthetic.main.activity_main.*
@@ -92,7 +94,8 @@ class MainActivity : AppCompatActivity(), MainView {
     }
 
     override fun navigateToMovieDetailsScreen(movieId: Int) {
-        startActivity(MovieDetailsActivity.newIntent(this, movieId = movieId))
+      //  startActivity(MovieDetailsActivity.newIntent(this, movieId = movieId))
+        navigateToMovieDetailsActivity(movieId = movieId)
     }
 
     override fun showError(errorString: String) {
@@ -169,8 +172,8 @@ class MainActivity : AppCompatActivity(), MainView {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.btnSearch -> {
-                this.startActivity(MovieSearchActivity.newIntent(this))
-
+               // this.startActivity(MovieSearchActivity.newIntent(this))
+                navigateToMovieSearchActivity()
                 true
             }
             else -> {
