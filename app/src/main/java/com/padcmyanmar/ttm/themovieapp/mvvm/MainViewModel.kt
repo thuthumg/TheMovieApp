@@ -9,7 +9,7 @@ import com.padcmyanmar.ttm.themovieapp.data.vos.GenreVO
 import com.padcmyanmar.ttm.themovieapp.data.vos.MovieVO
 import java.text.FieldPosition
 
-class MainViewModel: ViewModel() {
+class MainViewModel : ViewModel() {
 
     //Model
     private val mMovieModel = MovieModelImpl
@@ -23,7 +23,7 @@ class MainViewModel: ViewModel() {
     val actorsLiveData = MutableLiveData<List<ActorVO>>()
     val mErrorLiveData = MutableLiveData<String>()
 
-    fun getInitialData(){
+    fun getInitialData() {
         nowPlayingMovieLiveData = mMovieModel.getNowPlayingMovies { mErrorLiveData.postValue(it) }
         popularMoviesLiveData = mMovieModel.getPopularMovies { mErrorLiveData.postValue(it) }
         topRatedMoviesLiveData = mMovieModel.getTopRatedMovies { mErrorLiveData.postValue(it) }
@@ -31,7 +31,7 @@ class MainViewModel: ViewModel() {
         mMovieModel.getGenres(
             onSuccess = {
 
-                        genresLiveData.postValue(it)
+                genresLiveData.postValue(it)
                 getMovieByGenre(0)
             },
             onFailure = {
@@ -49,13 +49,13 @@ class MainViewModel: ViewModel() {
         )
     }
 
-    fun getMovieByGenre(genrePosition: Int){
+    fun getMovieByGenre(genrePosition: Int) {
         genresLiveData.value?.getOrNull(genrePosition)?.id?.let {
             mMovieModel?.getMoviesByGenre(it.toString(),
-            onSuccess = {moviesByGenre->
-                moviesByGenreLiveData.postValue(moviesByGenre)
-            }, onFailure = { errorMessage ->
-                mErrorLiveData.postValue(errorMessage)
+                onSuccess = { moviesByGenre ->
+                    moviesByGenreLiveData.postValue(moviesByGenre)
+                }, onFailure = { errorMessage ->
+                    mErrorLiveData.postValue(errorMessage)
                 })
         }
     }
